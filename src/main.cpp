@@ -116,9 +116,21 @@ int main() {
 
           double epsi 	= -atan(coeffs[1]);
 
+          double Lf = 2.67;
+          double dt = 0.1;
+
+          // predict vehicle state at the current moment of control (current time + dt)
+          const double current_px = v * dt;
+          const double current_py = 0;
+          const double current_psi = - v * delta * dt / Lf;
+          const double current_v = v + a * dt;
+          const double current_cte = cte + v * sin(epsi) * dt;
+          const double current_epsi = epsi + current_psi;
+
+
           // Feed in the predicted state values
           Eigen::VectorXd currentState(6);
-          currentState << px, py, psi, v, cte, epsi;
+          currentState << current_px, current_py, current_psi, current_v, current_cte, current_epsi;
 
           // MPC Solve
           auto mpcResult = mpc.Solve(currentState, coeffs);
@@ -131,12 +143,12 @@ int main() {
 
           json msgJson;
 
-          msgJson["steering_angle"] = steer_value;
+          msgJson["steering_angle"] = -1 * steer_value;
           msgJson["throttle"] = throttle_value;
 
           // Display the MPC predicted trajectory
-          vector<double> mpc_x_vals = {currentState[0]};
-          vector<double> mpc_y_vals = {currentState[1]};
+          vector<double> mpc_x_vals;
+          vector<double> mpc_y_vals;
 
           // add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
@@ -159,7 +171,7 @@ int main() {
 
 
           int N = 25;
-          int X = 2;
+          int X = 3;
 
           for (int i = 1; i < N; i++) {
             next_x_vals.push_back(i*X);
